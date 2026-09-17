@@ -1,0 +1,37 @@
+# Environment variables (SECRETS - never commit)
+.env
+.env.local
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Vector DB (local data)
+data/chroma/
+*.faiss
+*.index
+
+# PDFs (user uploaded)
+*.pdf
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Testing
+.pytest_cache/
+.coverage
