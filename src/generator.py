@@ -30,7 +30,7 @@ def format_context(hits: List[Dict]) -> str:
     return "\n\n---\n\n".join(parts)
 
 
-def answer_with_gemini(query: str, hits: List[Dict], model: str = "gemini-2.5-flash") -> str:
+def answer_with_gemini(query: str, hits: List[Dict], model: str = "gemini-3.6-flash") -> str:
     """Generate answer using Google Gemini (new google-genai SDK)."""
     client = genai.Client(api_key=get_api_key("gemini"))
     context = format_context(hits)
@@ -44,7 +44,7 @@ def answer_with_gemini(query: str, hits: List[Dict], model: str = "gemini-2.5-fl
     return response.text
 
 
-def answer_with_groq(query: str, hits: List[Dict], model: str = "llama-3.3-70b-versatile") -> str:
+def answer_with_groq(query: str, hits: List[Dict], model: str = "openai/gpt-oss-120b") -> str:
     """Generate answer using Groq (Llama)."""
     client = Groq(api_key=get_api_key("groq"))
     context = format_context(hits)
