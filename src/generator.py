@@ -1,6 +1,6 @@
 """LLM answer generation with citations."""
 from typing import List, Dict
-import google.generativeai as genai
+from google import genai
 from groq import Groq
 
 from .utils import get_api_key
@@ -30,14 +30,17 @@ def format_context(hits: List[Dict]) -> str:
     return "\n\n---\n\n".join(parts)
 
 
-def answer_with_gemini(query: str, hits: List[Dict], model: str = "gemini-2.0-flash") -> str:
-    """Generate answer using Google Gemini."""
-    genai.configure(api_key=get_api_key("gemini"))
+def answer_with_gemini(query: str, hits: List[Dict], model: str = "gemini-2.5-flash") -> str:
+    """Generate answer using Google Gemini (new google-genai SDK)."""
+    client = genai.Client(api_key=get_api_key("gemini"))
     context = format_context(hits)
 
-    model_obj = genai.GenerativeModel(model)
     prompt = SYSTEM_PROMPT.format(context=context) + f"\n\nQuestion: {query}\n\nAnswer:"
-    response = model_obj.generate_content(prompt)
+
+    response = client.models.generate_content(
+        model=model,
+        contents=prompt,
+    )
     return response.text
 
 
