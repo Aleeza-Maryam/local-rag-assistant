@@ -32,7 +32,7 @@ def main():
     print("\n" + "=" * 60)
     print("STEP 3: Searching...")
     print("=" * 60)
-    query = "What is machine learning?"
+    query = "What is NeuroCue and what does it do?"
     print(f"Query: {query}")
     hits = retriever.search(query, top_k=3)
     for i, h in enumerate(hits, 1):
