@@ -30,3 +30,4 @@ tiktoken>=0.11.0
 
 # Dev / Testing
 pytest>=8.4.0
+rank-bm25>=0.2.2
