@@ -11,7 +11,7 @@ import streamlit as st
 
 from src.ingest import ingest_pdf
 from src.retriever import Retriever
-from src.generator import generate_answer
+from src.generator import stream_answer
 from src.utils import get_vector_db_path
 
 
@@ -179,7 +179,14 @@ with st.sidebar:
         value=4,
         help="Number of document chunks to retrieve for each query.",
     )
-
+    alpha = st.slider(
+        "Search mode",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.5,
+        step=0.1,
+        help="0 = keyword (BM25) only | 1 = semantic (vector) only | 0.5 = balanced hybrid",
+    )
     st.divider()
 
     st.markdown('<div class="section-label">Document Ingestion</div>', unsafe_allow_html=True)
@@ -288,31 +295,32 @@ if query:
             st.session_state.messages.append({"role": "assistant", "content": answer})
         else:
             with st.spinner("Searching documents..."):
-                hits = st.session_state.retriever.search(query, top_k=top_k)
+                hits = st.session_state.retriever.search(query, top_k=top_k, alpha=alpha)
+
+            # Pass previous messages (excluding the current one) as history
+            history = st.session_state.messages[:-1]
 
             with st.spinner(f"Generating answer with {provider}..."):
                 try:
-                    answer = generate_answer(query, hits, provider=provider)
+                    stream = stream_answer(query, hits, provider=provider, history=history)
+                    answer = st.write_stream(stream)
                 except Exception as e:
                     answer = f"Error from {provider}: {e}"
                     st.error(answer)
 
-            if not answer.startswith("Error"):
-                st.markdown(answer)
+            if hits and not answer.startswith("Error"):
+                with st.expander(f"View {len(hits)} source(s)"):
+                    for i, src in enumerate(hits, 1):
+                        st.markdown(f"""
+                        <div class="source-card">
+                            <div class="source-title">{src['source']}</div>
+                            <div class="source-meta">Page {src['page']} &nbsp;|&nbsp; Chunk {src.get('chunk_index', i-1)} &nbsp;|&nbsp; Rank {i}</div>
+                            <div class="source-text">{src['text'][:400]}{'...' if len(src['text']) > 400 else ''}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
 
-                if hits:
-                    with st.expander(f"View {len(hits)} source(s)"):
-                        for i, src in enumerate(hits, 1):
-                            st.markdown(f"""
-                            <div class="source-card">
-                                <div class="source-title">{src['source']}</div>
-                                <div class="source-meta">Page {src['page']} &nbsp;|&nbsp; Chunk {src.get('chunk_index', i-1)} &nbsp;|&nbsp; Rank {i}</div>
-                                <div class="source-text">{src['text'][:400]}{'...' if len(src['text']) > 400 else ''}</div>
-                            </div>
-                            """, unsafe_allow_html=True)
-
-                st.session_state.messages.append({
-                    "role": "assistant",
-                    "content": answer,
-                    "sources": hits,
-                })
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": answer,
+                "sources": hits,
+            })
